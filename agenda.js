@@ -1,3 +1,8 @@
+function formatearFecha(fechaISO) {
+    const partes = fechaISO.split("-"); // formato: yyyy-mm-dd
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; // devuelve: dd/mm/yyyy
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
     const horariosDiv = document.getElementById("horarios");
@@ -44,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     nombre: "",
                     telefono: "",
                     deposito: false,
+                    montoDeposito: "",
                     comentario: "",
                 };
 
@@ -76,15 +82,91 @@ document.addEventListener("DOMContentLoaded", () => {
                         turno.telefono
                     }" class="telefono" />
                     <label>
-                      <input type="checkbox" ${
-                          turno.deposito ? "checked" : ""
-                      } class="deposito" />
-                      ¿Depósito realizado?
+                    <input type="checkbox" ${
+                        turno.deposito ? "checked" : ""
+                    } class="deposito" />
+                        ¿Depósito realizado?
                     </label>
+                    <div class="monto-container" style="display: ${
+                        turno.deposito ? "block" : "none"
+                    };">
+                        <input type="number" placeholder="Monto del depósito ($)" value="${
+                            turno.montoDeposito || ""
+                        }" class="monto-deposito" min="0" step="0.01" />
+                    </div>
                     <textarea placeholder="Comentarios..." class="comentario">${
                         turno.comentario
                     }</textarea>
                 `;
+
+                const depositoCheckbox = div.querySelector(".deposito");
+                const montoContainer = div.querySelector(".monto-container");
+                const montoInput = div.querySelector(".monto-deposito");
+
+                // Mostrar/ocultar campo de monto según checkbox
+                depositoCheckbox.addEventListener("change", () => {
+                    if (depositoCheckbox.checked) {
+                        montoContainer.style.display = "block";
+                        montoInput.focus();
+                    } else {
+                        montoContainer.style.display = "none";
+                        montoInput.value = "";
+                    }
+                });
+
+                const whatsappButton = document.createElement("button");
+                whatsappButton.textContent = "Compartir por WhatsApp";
+                whatsappButton.className = "btn-whatsapp";
+
+                whatsappButton.addEventListener("click", () => {
+                    const nombre =
+                        div.querySelector(".nombre").value.trim() || "Paciente";
+                    const telefono = div
+                        .querySelector(".telefono")
+                        .value.trim()
+                        .replace(/\D/g, ""); // solo números
+                    const comentario = div
+                        .querySelector(".comentario")
+                        .value.trim();
+                    const monto = montoInput.value.trim();
+                    const horaStr = `${hora}:00 - ${hora + 1}:00`;
+                    const consultorioNombre =
+                        consultorio === 1 ? "Analia" : "Gerardo";
+
+                    let depositoTexto;
+                    if (depositoCheckbox.checked) {
+                        if (monto) {
+                            depositoTexto = `✅ Depósito confirmado: $${monto}`;
+                        } else {
+                            depositoTexto = "✅ Depósito confirmado";
+                        }
+                    } else {
+                        depositoTexto = "❌ Aún no se realizó el depósito";
+                    }
+
+                    if (!telefono) {
+                        alert(
+                            "El número de teléfono está vacío o no es válido."
+                        );
+                        return;
+                    }
+
+                    const mensaje = `Hola ${nombre}, te recordamos tu turno:
+📅 Fecha: ${formatearFecha(fecha)}
+⏰ Hora: ${horaStr}
+🏥 Consultorio: ${consultorioNombre}
+💵 ${depositoTexto}
+📝 Comentario: ${comentario || "Ninguno"}
+
+Gracias por tu visita.`;
+
+                    const whatsappURL = `https://wa.me/549${telefono}?text=${encodeURIComponent(
+                        mensaje
+                    )}`;
+                    window.open(whatsappURL, "_blank");
+                });
+
+                div.appendChild(whatsappButton);
 
                 // Detectar cambios para guardar automáticamente
                 const nombreInput = div.querySelector(".nombre");
@@ -97,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         nombre: nombreInput.value,
                         telefono: telefonoInput.value,
                         deposito: depositoInput.checked,
+                        montoDeposito: montoInput.value,
                         comentario: comentarioInput.value,
                     });
                 };
@@ -104,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 nombreInput.addEventListener("input", save);
                 telefonoInput.addEventListener("input", save);
                 depositoInput.addEventListener("change", save);
+                montoInput.addEventListener("input", save);
                 comentarioInput.addEventListener("input", save);
 
                 horariosDiv.appendChild(div);
@@ -149,14 +233,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 const telefono = (turno.telefono || "").toLowerCase();
 
                 if (nombre.includes(texto) || telefono.includes(texto)) {
+                    let depositoTexto;
+                    if (turno.deposito) {
+                        if (turno.montoDeposito) {
+                            depositoTexto = `✅ $${turno.montoDeposito}`;
+                        } else {
+                            depositoTexto = "✅";
+                        }
+                    } else {
+                        depositoTexto = "❌";
+                    }
+
                     resultados.push({
-                        fecha,
+                        fecha: formatearFecha(fecha),
                         hora,
                         consultorio,
                         nombre: turno.nombre,
                         telefono: turno.telefono,
                         comentario: turno.comentario || "",
-                        deposito: turno.deposito ? "✔️" : "❌",
+                        deposito: depositoTexto,
                     });
                 }
             }
@@ -196,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${r.nombre}</td>
                     <td>${r.telefono}</td>
                     <td class="estado-deposito ${
-                        r.deposito === "✔️" ? "si" : "no"
+                        r.deposito.includes("✅") ? "si" : "no"
                     }">${r.deposito}</td>
                     <td>${r.comentario}</td>
                 </tr>`
@@ -218,41 +313,104 @@ document.addEventListener("DOMContentLoaded", () => {
             const hora = parseInt(fila.dataset.hora, 10);
             const consultorio = parseInt(fila.dataset.consultorio, 10);
 
+            // Convertir fecha de dd/mm/yyyy a yyyy-mm-dd para el input
+            const partesData = fecha.split("/");
+            const fechaISO = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
+
             // Cambiar la fecha en el input
-            document.getElementById("fecha").value = fecha;
-            mostrarHorarios(fecha);
+            document.getElementById("fecha").value = fechaISO;
+            mostrarHorarios(fechaISO);
 
             // Esperar a que se rendericen los horarios y resaltar el turno
             setTimeout(() => {
-                const clave = `${hora}-${consultorio}`;
+                console.log(
+                    `DEBUG: Buscando turno - Hora: ${hora}, Consultorio: ${consultorio}`
+                );
+
                 const turnosDivs = document.querySelectorAll(".horario");
-                turnosDivs.forEach((div) => {
-                    if (
-                        div
-                            .querySelector("h3")
-                            ?.textContent.includes(`${hora}:00`) &&
-                        div
-                            .querySelector("h3")
-                            ?.textContent.includes(
-                                `Consultorio ${
-                                    nombresConsultorios[consultorio] ||
-                                    consultorio
-                                }`
-                            )
-                    ) {
+                console.log(
+                    `DEBUG: Se encontraron ${turnosDivs.length} elementos .horario`
+                );
+
+                let encontrado = false;
+
+                turnosDivs.forEach((div, index) => {
+                    const h3Element = div.querySelector("h3");
+                    const h3Text = h3Element?.textContent || "";
+
+                    console.log(`DEBUG: Elemento ${index}: "${h3Text}"`);
+
+                    const tieneHora = h3Text.includes(`${hora}:00`);
+                    const tieneConsultorio = h3Text.includes(
+                        `Consultorio ${
+                            nombresConsultorios[consultorio] || consultorio
+                        }`
+                    );
+
+                    console.log(
+                        `DEBUG: Hora match: ${tieneHora}, Consultorio match: ${tieneConsultorio}`
+                    );
+
+                    if (tieneHora && tieneConsultorio) {
+                        console.log(
+                            "DEBUG: ¡MATCH ENCONTRADO! Aplicando resaltado..."
+                        );
+                        encontrado = true;
+
                         div.scrollIntoView({
                             behavior: "smooth",
                             block: "center",
                         });
-                        div.classList.add("resaltado");
 
-                        setTimeout(
-                            () => div.classList.remove("resaltado"),
-                            3000
+                        div.classList.add("resaltado");
+                        console.log(
+                            `DEBUG: Clases después de agregar: ${div.className}`
                         );
+
+                        // Verificar que se agregó
+                        // Verificar inmediatamente si se aplicó
+                        console.log("DEBUG: Verificando inmediatamente...");
+                        const elementoResaltado =
+                            document.querySelector(".horario.resaltado");
+                        console.log(
+                            "DEBUG: Elemento resaltado encontrado:",
+                            elementoResaltado
+                        );
+
+                        // Aplicar estilos directos con borde doble
+                        div.style.border = "6px solid #ff3300";
+                        div.style.outline = "4px solid #ff6600";
+                        div.style.outlineOffset = "3px";
+                        div.style.backgroundColor = "#fff3e0";
+                        div.style.transform = "scale(1.05)";
+                        div.style.boxShadow = "0 0 20px rgba(255, 51, 0, 0.6)";
+                        div.style.transition = "all 0.5s";
+                        div.style.zIndex = "999";
+                        div.style.position = "relative";
+
+                        setTimeout(() => {
+                            div.classList.remove("resaltado");
+                            // Quitar estilos directos también
+                            div.style.border = "";
+                            div.style.outline = "";
+                            div.style.outlineOffset = "";
+                            div.style.backgroundColor = "";
+                            div.style.transform = "";
+                            div.style.boxShadow = "";
+                            div.style.transition = "";
+                            div.style.zIndex = "";
+                            div.style.position = "";
+                            console.log(
+                                "DEBUG: Resaltado removido después de 5 segundos"
+                            );
+                        }, 5000);
                     }
                 });
-            }, 100); // esperar render
+
+                if (!encontrado) {
+                    console.log("DEBUG: NO se encontró ningún match");
+                }
+            }, 300); // Aumentar tiempo de espera
         });
 
     document.getElementById("btn-imprimir").addEventListener("click", () => {

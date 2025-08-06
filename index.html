@@ -5,37 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agenda Biomagnetismo</title>
   <link rel="stylesheet" href="style.css" />
+  
 </head>
 <body>
-  <div class="container">
-  <img src="logo.jpg" alt="Logo Cuerpomente" class="logo" />
-  <h1>Agenda del Consultorio</h1>
+   <div class="container">
+    <img src="logo.jpg" alt="Logo Cuerpomente" class="logo" />
+    <h1>Agenda del Consultorio</h1>
 
-  <label for="buscador" class="buscador-label">🔎 Buscar paciente:</label>
-<input type="text" id="buscador" placeholder="Nombre o teléfono" class="buscador-input">
+    <label for="buscador" class="buscador-label">🔎 Buscar paciente:</label>
+    <input type="text" id="buscador" placeholder="Nombre o teléfono" class="buscador-input">
 
-  
-<div id="resultados-globales" class="resultados-globales"></div>
+    <div id="resultados-globales" class="resultados-globales"></div>
 
+    <label for="fecha">Seleccionar día:</label>
+    <input type="date" id="fecha" />
 
+    <p id="contador-turnos"></p>
 
-  <label for="fecha">Seleccionar día:</label>
-  <input type="date" id="fecha" />
+    <div class="buttons">
+      <button id="descargar">📥 Guardar agenda</button>
+    </div>
 
-  <p id="contador-turnos"></p>
-
-  <div class="buttons">
-    <button id="descargar">📥 Guardar agenda</button>
-    <button id="limpiar">🗑️ Limpiar agenda</button>
+    <div id="horarios" class="horarios"></div>
   </div>
 
-  
-
-
-  <div id="horarios" class="horarios"></div>
-</div>
-
-<button id="btn-imprimir">🖨️ Imprimir agenda</button>
+  <button id="btn-imprimir">🖨️ Imprimir agenda</button>
 
 
 
