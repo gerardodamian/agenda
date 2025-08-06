@@ -95,6 +95,45 @@ input[type="date"] {
   transition: transform 0.2s ease;
 }
 
+.horario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffccbc;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.horario-header:hover {
+  background-color: #ffab91;
+}
+
+.horario-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #d84315;
+}
+
+.paciente-resumen {
+  margin: 0;
+  font-weight: bold;
+  font-size: 14px;
+  color: #4e342e;
+}
+
+.horario-detalle {
+  margin-top: 10px;
+  animation: expandir 0.2s ease-in-out;
+}
+
+@keyframes expandir {
+  from { opacity: 0; transform: scaleY(0.95); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+
 /* Turnos ocupados con borde doble PERMANENTE */
 .horario.agendado {
     background-color: #fff3e0;

@@ -72,32 +72,47 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 div.innerHTML = `
-                    <h3>${hora}:00 - ${hora + 1}:00 (Consultorio ${
+  <div class="horario-header">
+    <h3>${hora}:00 - ${hora + 1}:00 (Consultorio ${
                     nombresConsultorios[consultorio] || consultorio
                 })</h3>
-                    <input type="text" placeholder="Nombre del paciente" value="${
-                        turno.nombre
-                    }" class="nombre" />
-                    <input type="tel" placeholder="Teléfono" value="${
-                        turno.telefono
-                    }" class="telefono" />
-                    <label>
-                    <input type="checkbox" ${
-                        turno.deposito ? "checked" : ""
-                    } class="deposito" />
-                        ¿Depósito realizado?
-                    </label>
-                    <div class="monto-container" style="display: ${
-                        turno.deposito ? "block" : "none"
-                    };">
-                        <input type="number" placeholder="Monto del depósito ($)" value="${
-                            turno.montoDeposito || ""
-                        }" class="monto-deposito" min="0" step="0.01" />
-                    </div>
-                    <textarea placeholder="Comentarios..." class="comentario">${
-                        turno.comentario
-                    }</textarea>
-                `;
+    <p class="paciente-resumen">${turno.nombre || "Sin paciente"}</p>
+  </div>
+
+  <div class="horario-detalle" style="display: none;">
+    <input type="text" placeholder="Nombre del paciente" value="${
+        turno.nombre
+    }" class="nombre" />
+    <input type="tel" placeholder="Teléfono" value="${
+        turno.telefono
+    }" class="telefono" />
+    <label>
+      <input type="checkbox" ${
+          turno.deposito ? "checked" : ""
+      } class="deposito" />
+      ¿Depósito realizado?
+    </label>
+    <div class="monto-container" style="display: ${
+        turno.deposito ? "block" : "none"
+    };">
+      <input type="number" placeholder="Monto del depósito ($)" value="${
+          turno.montoDeposito || ""
+      }" class="monto-deposito" min="0" step="0.01" />
+    </div>
+    <textarea placeholder="Comentarios..." class="comentario">${
+        turno.comentario
+    }</textarea>
+  </div>
+`;
+
+                // Toggle desplegable
+                const header = div.querySelector(".horario-header");
+                const detalle = div.querySelector(".horario-detalle");
+                header.style.cursor = "pointer";
+                header.addEventListener("click", () => {
+                    detalle.style.display =
+                        detalle.style.display === "none" ? "block" : "none";
+                });
 
                 const depositoCheckbox = div.querySelector(".deposito");
                 const montoContainer = div.querySelector(".monto-container");
@@ -303,6 +318,7 @@ Gracias por tu visita.`;
     });
 
     // Evento para hacer clic en los resultados y abrir la fecha + resaltar turno
+    // Evento para hacer clic en los resultados y abrir la fecha + resaltar turno
     document
         .getElementById("resultados-globales")
         .addEventListener("click", (e) => {
@@ -323,61 +339,44 @@ Gracias por tu visita.`;
 
             // Esperar a que se rendericen los horarios y resaltar el turno
             setTimeout(() => {
-                console.log(
-                    `DEBUG: Buscando turno - Hora: ${hora}, Consultorio: ${consultorio}`
-                );
-
                 const turnosDivs = document.querySelectorAll(".horario");
-                console.log(
-                    `DEBUG: Se encontraron ${turnosDivs.length} elementos .horario`
-                );
-
                 let encontrado = false;
 
-                turnosDivs.forEach((div, index) => {
-                    const h3Element = div.querySelector("h3");
-                    const h3Text = h3Element?.textContent || "";
+                turnosDivs.forEach((div) => {
+                    const nombre = div
+                        .querySelector(".nombre")
+                        ?.value.trim()
+                        .toLowerCase();
+                    const tel = div
+                        .querySelector(".telefono")
+                        ?.value.trim()
+                        .toLowerCase();
+                    const h3 = div.querySelector("h3")?.textContent || "";
 
-                    console.log(`DEBUG: Elemento ${index}: "${h3Text}"`);
-
-                    const tieneHora = h3Text.includes(`${hora}:00`);
-                    const tieneConsultorio = h3Text.includes(
+                    const tieneHora = h3.includes(`${hora}:00`);
+                    const tieneConsultorio = h3.includes(
                         `Consultorio ${
                             nombresConsultorios[consultorio] || consultorio
                         }`
                     );
+                    const coincideContenido =
+                        nombre ===
+                            fila.cells[3].textContent.trim().toLowerCase() ||
+                        tel === fila.cells[4].textContent.trim().toLowerCase();
 
-                    console.log(
-                        `DEBUG: Hora match: ${tieneHora}, Consultorio match: ${tieneConsultorio}`
-                    );
-
-                    if (tieneHora && tieneConsultorio) {
-                        console.log(
-                            "DEBUG: ¡MATCH ENCONTRADO! Aplicando resaltado..."
-                        );
+                    if (tieneHora && tieneConsultorio && coincideContenido) {
                         encontrado = true;
+
+                        // Mostrar detalle
+                        const detalle = div.querySelector(".horario-detalle");
+                        if (detalle) detalle.style.display = "block";
 
                         div.scrollIntoView({
                             behavior: "smooth",
                             block: "center",
                         });
-
                         div.classList.add("resaltado");
-                        console.log(
-                            `DEBUG: Clases después de agregar: ${div.className}`
-                        );
 
-                        // Verificar que se agregó
-                        // Verificar inmediatamente si se aplicó
-                        console.log("DEBUG: Verificando inmediatamente...");
-                        const elementoResaltado =
-                            document.querySelector(".horario.resaltado");
-                        console.log(
-                            "DEBUG: Elemento resaltado encontrado:",
-                            elementoResaltado
-                        );
-
-                        // Aplicar estilos directos con borde doble
                         div.style.border = "6px solid #ff3300";
                         div.style.outline = "4px solid #ff6600";
                         div.style.outlineOffset = "3px";
@@ -390,27 +389,15 @@ Gracias por tu visita.`;
 
                         setTimeout(() => {
                             div.classList.remove("resaltado");
-                            // Quitar estilos directos también
-                            div.style.border = "";
-                            div.style.outline = "";
-                            div.style.outlineOffset = "";
-                            div.style.backgroundColor = "";
-                            div.style.transform = "";
-                            div.style.boxShadow = "";
-                            div.style.transition = "";
-                            div.style.zIndex = "";
-                            div.style.position = "";
-                            console.log(
-                                "DEBUG: Resaltado removido después de 5 segundos"
-                            );
+                            div.removeAttribute("style");
                         }, 5000);
                     }
                 });
 
                 if (!encontrado) {
-                    console.log("DEBUG: NO se encontró ningún match");
+                    console.warn("No se encontró ningún turno coincidente.");
                 }
-            }, 300); // Aumentar tiempo de espera
+            }, 300);
         });
 
     document.getElementById("btn-imprimir").addEventListener("click", () => {
