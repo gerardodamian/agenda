@@ -1,15 +1,14 @@
 function formatearFecha(fechaISO) {
-    const partes = fechaISO.split("-"); // formato: yyyy-mm-dd
-    return `${partes[2]}/${partes[1]}/${partes[0]}`; // devuelve: dd/mm/yyyy
+    const partes = fechaISO.split("-"); // yyyy-mm-dd
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; // dd/mm/yyyy
 }
+
+const BASE_URL = "http://localhost:3001";
 
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
     const horariosDiv = document.getElementById("horarios");
-    const nombresConsultorios = {
-        1: "Analia",
-        2: "Gerardo",
-    };
+    const nombresConsultorios = { 1: "Analia", 2: "Gerardo" };
 
     fechaInput.addEventListener("change", () => {
         const fechaSeleccionada = fechaInput.value;
@@ -18,26 +17,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    function getTurnosGuardados() {
-        const datos = localStorage.getItem("agendaTurnos");
-        return datos ? JSON.parse(datos) : {};
+    // Leer turnos desde el backend
+    async function getTurnosGuardados(fecha) {
+        try {
+            const res = await fetch(`${BASE_URL}/turnos/${fecha}`);
+            if (!res.ok) throw new Error("Error al obtener turnos");
+            return await res.json();
+        } catch (err) {
+            console.error("Error:", err);
+            return {};
+        }
     }
 
-    function guardarTurno(fecha, hora, consultorio, turnoData) {
-        const agenda = getTurnosGuardados();
-        if (!agenda[fecha]) agenda[fecha] = {};
-        agenda[fecha][`${hora}-${consultorio}`] = turnoData;
-        localStorage.setItem("agendaTurnos", JSON.stringify(agenda));
+    // Guardar turno en el backend
+    async function guardarTurno(fecha, hora, consultorio, turnoData) {
+        try {
+            await fetch(`${BASE_URL}/turnos/${fecha}/${hora}/${consultorio}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(turnoData),
+            });
+        } catch (err) {
+            console.error("Error al guardar turno:", err);
+        }
     }
 
-    function mostrarHorarios(fecha) {
+    async function mostrarHorarios(fecha) {
         horariosDiv.innerHTML = "";
-        const turnosGuardados = getTurnosGuardados()[fecha] || {};
+        const turnosGuardados = await getTurnosGuardados(fecha);
 
         let agendados = Object.values(turnosGuardados).filter(
             (t) => t.nombre || t.telefono
         ).length;
-
         document.getElementById(
             "contador-turnos"
         ).textContent = `Turnos agendados: ${agendados}/28`;
@@ -63,49 +74,46 @@ document.addEventListener("DOMContentLoaded", () => {
                     turno.comentario
                 ) {
                     div.classList.add("agendado");
-
-                    if (turno.nombre || turno.telefono) {
-                        div.title = `Paciente: ${
-                            turno.nombre || "Sin nombre"
-                        }\nTel: ${turno.telefono || "Sin teléfono"}`;
-                    }
+                    div.title = `Paciente: ${
+                        turno.nombre || "Sin nombre"
+                    }\nTel: ${turno.telefono || "Sin teléfono"}`;
                 }
 
                 div.innerHTML = `
-  <div class="horario-header">
-    <h3>${hora}:00 - ${hora + 1}:00 (Consultorio ${
-                    nombresConsultorios[consultorio] || consultorio
+                  <div class="horario-header">
+                    <h3>${hora}:00 - ${hora + 1}:00 (Consultorio ${
+                    nombresConsultorios[consultorio]
                 })</h3>
-    <p class="paciente-resumen">${turno.nombre || "Sin paciente"}</p>
-  </div>
+                    <p class="paciente-resumen">${
+                        turno.nombre || "Sin paciente"
+                    }</p>
+                  </div>
+                  <div class="horario-detalle" style="display: none;">
+                    <input type="text" placeholder="Nombre del paciente" value="${
+                        turno.nombre
+                    }" class="nombre" />
+                    <input type="tel" placeholder="Teléfono" value="${
+                        turno.telefono
+                    }" class="telefono" />
+                    <label>
+                      <input type="checkbox" ${
+                          turno.deposito ? "checked" : ""
+                      } class="deposito" /> ¿Depósito realizado?
+                    </label>
+                    <div class="monto-container" style="display: ${
+                        turno.deposito ? "block" : "none"
+                    };">
+                      <input type="number" placeholder="Monto del depósito ($)" value="${
+                          turno.montoDeposito || ""
+                      }" class="monto-deposito" min="0" step="0.01" />
+                    </div>
+                    <textarea placeholder="Comentarios..." class="comentario">${
+                        turno.comentario
+                    }</textarea>
+                  </div>
+                `;
 
-  <div class="horario-detalle" style="display: none;">
-    <input type="text" placeholder="Nombre del paciente" value="${
-        turno.nombre
-    }" class="nombre" />
-    <input type="tel" placeholder="Teléfono" value="${
-        turno.telefono
-    }" class="telefono" />
-    <label>
-      <input type="checkbox" ${
-          turno.deposito ? "checked" : ""
-      } class="deposito" />
-      ¿Depósito realizado?
-    </label>
-    <div class="monto-container" style="display: ${
-        turno.deposito ? "block" : "none"
-    };">
-      <input type="number" placeholder="Monto del depósito ($)" value="${
-          turno.montoDeposito || ""
-      }" class="monto-deposito" min="0" step="0.01" />
-    </div>
-    <textarea placeholder="Comentarios..." class="comentario">${
-        turno.comentario
-    }</textarea>
-  </div>
-`;
-
-                // Toggle desplegable
+                // Toggle detalle
                 const header = div.querySelector(".horario-header");
                 const detalle = div.querySelector(".horario-detalle");
                 header.style.cursor = "pointer";
@@ -114,50 +122,40 @@ document.addEventListener("DOMContentLoaded", () => {
                         detalle.style.display === "none" ? "block" : "none";
                 });
 
+                // Depósito
                 const depositoCheckbox = div.querySelector(".deposito");
                 const montoContainer = div.querySelector(".monto-container");
                 const montoInput = div.querySelector(".monto-deposito");
-
-                // Mostrar/ocultar campo de monto según checkbox
                 depositoCheckbox.addEventListener("change", () => {
-                    if (depositoCheckbox.checked) {
-                        montoContainer.style.display = "block";
-                        montoInput.focus();
-                    } else {
-                        montoContainer.style.display = "none";
-                        montoInput.value = "";
-                    }
+                    montoContainer.style.display = depositoCheckbox.checked
+                        ? "block"
+                        : "none";
+                    if (!depositoCheckbox.checked) montoInput.value = "";
                 });
 
+                // Botón WhatsApp
                 const whatsappButton = document.createElement("button");
                 whatsappButton.textContent = "Compartir por WhatsApp";
                 whatsappButton.className = "btn-whatsapp";
-
                 whatsappButton.addEventListener("click", () => {
                     const nombre =
                         div.querySelector(".nombre").value.trim() || "Paciente";
                     const telefono = div
                         .querySelector(".telefono")
                         .value.trim()
-                        .replace(/\D/g, ""); // solo números
+                        .replace(/\D/g, "");
                     const comentario = div
                         .querySelector(".comentario")
                         .value.trim();
                     const monto = montoInput.value.trim();
                     const horaStr = `${hora}:00 - ${hora + 1}:00`;
-                    const consultorioNombre =
-                        consultorio === 1 ? "Analia" : "Gerardo";
+                    const consultorioNombre = nombresConsultorios[consultorio];
 
-                    let depositoTexto;
-                    if (depositoCheckbox.checked) {
-                        if (monto) {
-                            depositoTexto = `✅ Depósito confirmado: $${monto}`;
-                        } else {
-                            depositoTexto = "✅ Depósito confirmado";
-                        }
-                    } else {
-                        depositoTexto = "❌ Aún no se realizó el depósito";
-                    }
+                    let depositoTexto = depositoCheckbox.checked
+                        ? monto
+                            ? `✅ Depósito confirmado: $${monto}`
+                            : "✅ Depósito confirmado"
+                        : "❌ Aún no se realizó el depósito";
 
                     if (!telefono) {
                         alert(
@@ -175,59 +173,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
 Gracias por tu visita.`;
 
-                    const whatsappURL = `https://wa.me/549${telefono}?text=${encodeURIComponent(
-                        mensaje
-                    )}`;
-                    window.open(whatsappURL, "_blank");
+                    window.open(
+                        `https://wa.me/549${telefono}?text=${encodeURIComponent(
+                            mensaje
+                        )}`,
+                        "_blank"
+                    );
                 });
 
                 div.appendChild(whatsappButton);
 
-                // Detectar cambios para guardar automáticamente
-                const nombreInput = div.querySelector(".nombre");
-                const telefonoInput = div.querySelector(".telefono");
-                const depositoInput = div.querySelector(".deposito");
-                const comentarioInput = div.querySelector(".comentario");
-
+                // Guardado automático
                 const save = () => {
                     guardarTurno(fecha, hora, consultorio, {
-                        nombre: nombreInput.value,
-                        telefono: telefonoInput.value,
-                        deposito: depositoInput.checked,
+                        nombre: div.querySelector(".nombre").value,
+                        telefono: div.querySelector(".telefono").value,
+                        deposito: depositoCheckbox.checked,
                         montoDeposito: montoInput.value,
-                        comentario: comentarioInput.value,
+                        comentario: div.querySelector(".comentario").value,
                     });
                 };
-
-                nombreInput.addEventListener("input", save);
-                telefonoInput.addEventListener("input", save);
-                depositoInput.addEventListener("change", save);
+                div.querySelector(".nombre").addEventListener("input", save);
+                div.querySelector(".telefono").addEventListener("input", save);
+                depositoCheckbox.addEventListener("change", save);
                 montoInput.addEventListener("input", save);
-                comentarioInput.addEventListener("input", save);
+                div.querySelector(".comentario").addEventListener(
+                    "input",
+                    save
+                );
 
                 horariosDiv.appendChild(div);
             }
         }
     }
 
-    document.getElementById("descargar").addEventListener("click", () => {
-        const data = localStorage.getItem("agendaTurnos");
-        if (data) {
-            const blob = new Blob([data], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "agenda_turnos.json";
-            a.click();
-
-            URL.revokeObjectURL(url);
-        } else {
-            alert("No hay datos para descargar.");
-        }
-    });
-
-    document.getElementById("buscador").addEventListener("input", (e) => {
+    document.getElementById("buscador").addEventListener("input", async (e) => {
         const texto = e.target.value.trim().toLowerCase();
         const resultadosDiv = document.getElementById("resultados-globales");
 
@@ -236,7 +216,9 @@ Gracias por tu visita.`;
             return;
         }
 
-        const agenda = getTurnosGuardados();
+        // Obtener TODOS los turnos del backend
+        const res = await fetch(`${BASE_URL}/turnos`);
+        const agenda = await res.json();
         let resultados = [];
 
         for (const fecha in agenda) {
@@ -250,17 +232,16 @@ Gracias por tu visita.`;
                 if (nombre.includes(texto) || telefono.includes(texto)) {
                     let depositoTexto;
                     if (turno.deposito) {
-                        if (turno.montoDeposito) {
-                            depositoTexto = `✅ $${turno.montoDeposito}`;
-                        } else {
-                            depositoTexto = "✅";
-                        }
+                        depositoTexto = turno.montoDeposito
+                            ? `✅ $${turno.montoDeposito}`
+                            : "✅";
                     } else {
                         depositoTexto = "❌";
                     }
 
                     resultados.push({
-                        fecha: formatearFecha(fecha),
+                        fechaISO: fecha, // yyyy-mm-dd
+                        fechaFormateada: formatearFecha(fecha),
                         hora,
                         consultorio,
                         nombre: turno.nombre,
@@ -277,97 +258,74 @@ Gracias por tu visita.`;
             return;
         }
 
-        // Mostrar resultados como tabla con atributos de datos para acceder luego
         resultadosDiv.innerHTML = `
-    <table>
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Consultorio</th>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Depósito</th>
-                <th>Comentario</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${resultados
-                .map(
-                    (r) => `
-                <tr class="resultado-turno" data-fecha="${
-                    r.fecha
-                }" data-hora="${r.hora}" data-consultorio="${r.consultorio}">
-                    <td>${r.fecha}</td>
-                    <td>${r.hora}:00</td>
-                    <td>${
-                        nombresConsultorios[r.consultorio] || r.consultorio
-                    }</td>
-                    <td>${r.nombre}</td>
-                    <td>${r.telefono}</td>
-                    <td class="estado-deposito ${
-                        r.deposito.includes("✅") ? "si" : "no"
-                    }">${r.deposito}</td>
-                    <td>${r.comentario}</td>
-                </tr>`
-                )
-                .join("")}
-        </tbody>
-    </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Consultorio</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Depósito</th>
+                    <th>Comentario</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${resultados
+                    .map(
+                        (r) => `
+                    <tr class="resultado-turno" 
+                        data-fecha="${r.fechaISO}" 
+                        data-hora="${r.hora}" 
+                        data-consultorio="${r.consultorio}">
+                        <td>${r.fechaFormateada}</td>
+                        <td>${r.hora}:00</td>
+                        <td>${
+                            nombresConsultorios[r.consultorio] || r.consultorio
+                        }</td>
+                        <td>${r.nombre}</td>
+                        <td>${r.telefono}</td>
+                        <td class="estado-deposito ${
+                            r.deposito.includes("✅") ? "si" : "no"
+                        }">${r.deposito}</td>
+                        <td>${r.comentario}</td>
+                    </tr>
+                `
+                    )
+                    .join("")}
+            </tbody>
+        </table>
     `;
     });
 
-    // Evento para hacer clic en los resultados y abrir la fecha + resaltar turno
-    // Evento para hacer clic en los resultados y abrir la fecha + resaltar turno
     document
         .getElementById("resultados-globales")
-        .addEventListener("click", (e) => {
+        .addEventListener("click", async (e) => {
             const fila = e.target.closest(".resultado-turno");
             if (!fila) return;
 
-            const fecha = fila.dataset.fecha;
+            const fechaISO = fila.dataset.fecha; // yyyy-mm-dd
             const hora = parseInt(fila.dataset.hora, 10);
             const consultorio = parseInt(fila.dataset.consultorio, 10);
 
-            // Convertir fecha de dd/mm/yyyy a yyyy-mm-dd para el input
-            const partesData = fecha.split("/");
-            const fechaISO = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
-
             // Cambiar la fecha en el input
             document.getElementById("fecha").value = fechaISO;
-            mostrarHorarios(fechaISO);
+            await mostrarHorarios(fechaISO);
 
-            // Esperar a que se rendericen los horarios y resaltar el turno
+            // Esperar un poquito para que se rendericen las tarjetas
             setTimeout(() => {
+                const clave = `${hora}-${consultorio}`;
                 const turnosDivs = document.querySelectorAll(".horario");
-                let encontrado = false;
 
                 turnosDivs.forEach((div) => {
-                    const nombre = div
-                        .querySelector(".nombre")
-                        ?.value.trim()
-                        .toLowerCase();
-                    const tel = div
-                        .querySelector(".telefono")
-                        ?.value.trim()
-                        .toLowerCase();
                     const h3 = div.querySelector("h3")?.textContent || "";
-
-                    const tieneHora = h3.includes(`${hora}:00`);
-                    const tieneConsultorio = h3.includes(
-                        `Consultorio ${
-                            nombresConsultorios[consultorio] || consultorio
-                        }`
+                    const coincideHora = h3.startsWith(`${hora}:00`);
+                    const coincideConsultorio = h3.includes(
+                        `Consultorio ${nombresConsultorios[consultorio]}`
                     );
-                    const coincideContenido =
-                        nombre ===
-                            fila.cells[3].textContent.trim().toLowerCase() ||
-                        tel === fila.cells[4].textContent.trim().toLowerCase();
 
-                    if (tieneHora && tieneConsultorio && coincideContenido) {
-                        encontrado = true;
-
-                        // Mostrar detalle
+                    if (coincideHora && coincideConsultorio) {
                         const detalle = div.querySelector(".horario-detalle");
                         if (detalle) detalle.style.display = "block";
 
@@ -375,32 +333,14 @@ Gracias por tu visita.`;
                             behavior: "smooth",
                             block: "center",
                         });
-                        div.classList.add("resaltado");
-
-                        div.style.border = "6px solid #ff3300";
-                        div.style.outline = "4px solid #ff6600";
-                        div.style.outlineOffset = "3px";
+                        div.style.border = "4px solid orange";
                         div.style.backgroundColor = "#fff3e0";
-                        div.style.transform = "scale(1.05)";
-                        div.style.boxShadow = "0 0 20px rgba(255, 51, 0, 0.6)";
-                        div.style.transition = "all 0.5s";
-                        div.style.zIndex = "999";
-                        div.style.position = "relative";
-
                         setTimeout(() => {
-                            div.classList.remove("resaltado");
-                            div.removeAttribute("style");
-                        }, 5000);
+                            div.style.border = "";
+                            div.style.backgroundColor = "";
+                        }, 3000);
                     }
                 });
-
-                if (!encontrado) {
-                    console.warn("No se encontró ningún turno coincidente.");
-                }
             }, 300);
         });
-
-    document.getElementById("btn-imprimir").addEventListener("click", () => {
-        window.print();
-    });
 });
