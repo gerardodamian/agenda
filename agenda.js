@@ -1,12 +1,11 @@
 function formatearFecha(fechaISO) {
-    const partes = fechaISO.split("-"); 
-    return `${partes[2]}/${partes[1]}/${partes[0]}`; 
+    const partes = fechaISO.split("-"); // formato: yyyy-mm-dd
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; // devuelve: dd/mm/yyyy
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
     const horariosDiv = document.getElementById("horarios");
-    const API_BASE_URL = "https://agenda-backend-production-112d.up.railway.app/"; 
     const nombresConsultorios = {
         1: "Analia",
         2: "Gerardo",
@@ -19,62 +18,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Función para obtener turnos del servidor
-    async function getTurnosGuardados(fecha) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/turnos/${fecha}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error("Error al obtener turnos:", error);
-            return {};
-        }
+    function getTurnosGuardados() {
+        const datos = localStorage.getItem("agendaTurnos");
+        return datos ? JSON.parse(datos) : {};
     }
 
-    // Función para guardar turno en el servidor
-    async function guardarTurno(fecha, hora, consultorio, turnoData) {
-        try {
-            const response = await fetch(
-                `${API_BASE_URL}/turnos/${fecha}/${hora}/${consultorio}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(turnoData),
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error("Error al guardar turno:", error);
-            alert("Error al guardar el turno. Verifique su conexión.");
-        }
+    function guardarTurno(fecha, hora, consultorio, turnoData) {
+        const agenda = getTurnosGuardados();
+        if (!agenda[fecha]) agenda[fecha] = {};
+        agenda[fecha][`${hora}-${consultorio}`] = turnoData;
+        localStorage.setItem("agendaTurnos", JSON.stringify(agenda));
     }
 
-    // Función para obtener todos los turnos (para búsqueda global)
-    async function getTodosLosTurnos() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/turnos/all`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error("Error al obtener todos los turnos:", error);
-            return {};
-        }
-    }
-
-    async function mostrarHorarios(fecha) {
+    function mostrarHorarios(fecha) {
         horariosDiv.innerHTML = "";
-        const turnosGuardados = await getTurnosGuardados(fecha);
+        const turnosGuardados = getTurnosGuardados()[fecha] || {};
 
         let agendados = Object.values(turnosGuardados).filter(
             (t) => t.nombre || t.telefono
@@ -252,14 +210,9 @@ Gracias por tu visita.`;
         }
     }
 
-    document.getElementById("descargar").addEventListener("click", async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/turnos/export`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.text();
+    document.getElementById("descargar").addEventListener("click", () => {
+        const data = localStorage.getItem("agendaTurnos");
+        if (data) {
             const blob = new Blob([data], { type: "application/json" });
             const url = URL.createObjectURL(blob);
 
@@ -269,13 +222,12 @@ Gracias por tu visita.`;
             a.click();
 
             URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Error al descargar:", error);
-            alert("Error al descargar los datos. Verifique su conexión.");
+        } else {
+            alert("No hay datos para descargar.");
         }
     });
 
-    document.getElementById("buscador").addEventListener("input", async (e) => {
+    document.getElementById("buscador").addEventListener("input", (e) => {
         const texto = e.target.value.trim().toLowerCase();
         const resultadosDiv = document.getElementById("resultados-globales");
 
@@ -284,7 +236,7 @@ Gracias por tu visita.`;
             return;
         }
 
-        const agenda = await getTodosLosTurnos();
+        const agenda = getTurnosGuardados();
         let resultados = [];
 
         for (const fecha in agenda) {
@@ -365,6 +317,7 @@ Gracias por tu visita.`;
     `;
     });
 
+    // Evento para hacer clic en los resultados y abrir la fecha + resaltar turno
     // Evento para hacer clic en los resultados y abrir la fecha + resaltar turno
     document
         .getElementById("resultados-globales")
