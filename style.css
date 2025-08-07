@@ -16,7 +16,7 @@ body {
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-  border: 2px solid #ffe0b2;
+  border: 2px solid #f30606;
 }
 
 .logo {
@@ -46,12 +46,12 @@ body {
 }
 
 .buttons button:hover {
-  background-color: #e64a19;
+  background-color: #e61919;
 }
 
 
 h1 {
-  color: #e65100;
+  color: #e60000;
   text-align: center;
   margin-bottom: 25px;
 }
@@ -60,16 +60,16 @@ label {
   font-weight: bold;
   display: block;
   margin-bottom: 8px;
-  color: #bf360c;
+  color: #eb2727;
   font-size: 18px;
 }
 
 input[type="date"] {
   padding: 10px;
   font-size: 16px;
-  border: 2px solid #ffccbc;
+  border: 2px solid #f38787;
   border-radius: 8px;
-  background-color: #fff3e0;
+  background-color: #f3cece;
   color: #333;
   margin-bottom: 25px;
   width: 250px;
@@ -85,13 +85,13 @@ input[type="date"] {
 
 
 .horario {
-  background-color: #ffedd5;
+  background-color: #ffd5d5;
   padding: 16px;
   border-radius: 10px;
   width: calc(50% - 20px); /* ✅ Dos columnas */
   min-width: 280px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  border: 1px solid #ffe0b2;
+  border: 1px solid #f79b9b;
   transition: transform 0.2s ease;
 }
 
@@ -107,7 +107,7 @@ input[type="date"] {
 }
 
 .horario-header:hover {
-  background-color: #ffab91;
+  background-color: #f83c02;
 }
 
 .horario-header h3 {
@@ -120,7 +120,7 @@ input[type="date"] {
   margin: 0;
   font-weight: bold;
   font-size: 14px;
-  color: #4e342e;
+  color: #df694f;
 }
 
 .horario-detalle {
@@ -137,10 +137,10 @@ input[type="date"] {
 /* Turnos ocupados con borde doble PERMANENTE */
 .horario.agendado {
     background-color: #fff3e0;
-    border: 4px solid #ff7043 !important;
-    outline: 2px solid #ff9800 !important;
+    border: 4px solid #ff4343 !important;
+    outline: 2px solid #ff0000 !important;
     outline-offset: 2px !important;
-    box-shadow: 0 0 8px rgba(255, 112, 67, 0.4) !important;
+    box-shadow: 0 0 8px rgba(255, 67, 67, 0.4) !important;
 }
 
 /* Resaltado temporal con borde doble MÁS GRUESO (para búsqueda) */
@@ -165,7 +165,7 @@ input[type="date"] {
 
 .horario h3 {
   margin: 0 0 10px;
-  color: #d84315;
+  color: #d81515;
   font-size: 18px;
   text-align: center;
 }
@@ -185,7 +185,7 @@ input[type="date"] {
 .horario input[type="text"]:focus,
 .horario input[type="tel"]:focus,
 .horario textarea:focus {
-  border-color: #ff7043;
+  border-color: #ff4343;
   outline: none;
 }
 
@@ -200,7 +200,7 @@ input[type="date"] {
   gap: 5px;
   font-size: 14px;
   margin-bottom: 5px;
-  color: #4e342e;
+  color: #4e2e2e;
 }
 
 input[type="checkbox"] {
@@ -209,18 +209,18 @@ input[type="checkbox"] {
 
 .horario.agendado {
   background-color: #ffe0b2;
-  border: 2px solid #ff7043;
+  border: 2px solid #ff4343;
 }
 
 .horario.agendado {
   background-color: #fff3e0; /* fondo más cálido */
-  border: 2px solid #ff7043;
-  box-shadow: 0 0 5px rgba(255, 112, 67, 0.5);
+  border: 2px solid #ff4343;
+  box-shadow: 0 0 5px rgba(255, 67, 67, 0.5);
 }
 
 .resultados-globales {
   margin-top: 20px;
-  border: 2px solid #ffe0b2;
+  border: 2px solid #ffb2b2;
   border-radius: 12px;
   padding: 20px;
   background-color: #fff8f0;
@@ -242,7 +242,7 @@ input[type="checkbox"] {
 
 .resultados-globales th {
   background-color: #ffe0b2;
-  color: #4e342e;
+  color: #aa5c5c;
   font-weight: bold;
 }
 
@@ -251,7 +251,7 @@ input[type="checkbox"] {
 }
 
 .resultados-globales td {
-  color: #5d4037;
+  color: #c26f6f;
   vertical-align: top;
 }
 
@@ -294,21 +294,21 @@ input[type="checkbox"] {
   display: block;
   margin: 20px auto 40px;
   padding: 12px 28px;
-  background-color: #ff7043;
+  background-color: #ff4343;
   color: white;
   font-weight: bold;
   font-size: 16px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 6px 12px rgba(255, 112, 67, 0.4);
+  box-shadow: 0 6px 12px rgba(255, 67, 67, 0.4);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   max-width: 240px;
   text-align: center;
 }
 
 #btn-imprimir:hover {
-  background-color: #e64a19;
+  background-color: #e6c719;
   box-shadow: 0 8px 18px rgba(230, 74, 25, 0.6);
 }
 
@@ -332,7 +332,7 @@ input[type="checkbox"] {
     padding: 8px;
     background-color: #f0f9ff;
     border-radius: 4px;
-    border-left: 3px solid #0ea5e9;
+    border-left: 3px solid #28e90e;
 }
 
 .monto-deposito {
@@ -348,12 +348,12 @@ input[type="checkbox"] {
 
 .monto-deposito:focus {
     outline: none;
-    border-color: #0ea5e9;
-    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+    border-color: #0ee920;
+    box-shadow: 0 0 0 2px rgba(14, 233, 25, 0.1);
 }
 
 .monto-deposito::placeholder {
-    color: #9ca3af;
+    color: #9caf9c;
     font-style: italic;
 }
 
@@ -371,10 +371,10 @@ input[type="checkbox"] {
 
   .resultados-globales tr {
     margin-bottom: 15px;
-    border: 1px solid #ffe0b2;
+    border: 1px solid #ffc8b2;
     border-radius: 8px;
     padding: 10px;
-    background-color: #fff3e0;
+    background-color: #ffe5e0;
   }
 
   .resultados-globales td {
