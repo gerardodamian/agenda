@@ -1,12 +1,12 @@
 function formatearFecha(fechaISO) {
-    const partes = fechaISO.split("-"); // formato: yyyy-mm-dd
-    return `${partes[2]}/${partes[1]}/${partes[0]}`; // devuelve: dd/mm/yyyy
+    const partes = fechaISO.split("-"); 
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; 
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
     const horariosDiv = document.getElementById("horarios");
-    const API_BASE_URL = "https://agenda-backend-production-112d.up.railway.app/"; // Cambia esto por tu URL de producción
+    const API_BASE_URL = "https://agenda-backend-production-112d.up.railway.app/"; 
     const nombresConsultorios = {
         1: "Analia",
         2: "Gerardo",
