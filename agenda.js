@@ -6,7 +6,7 @@ function formatearFecha(fechaISO) {
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
     const horariosDiv = document.getElementById("horarios");
-    const API_BASE_URL = "http://localhost:3001"; // Cambia esto por tu URL de producción
+    const API_BASE_URL = "https://agenda-backend-production-112d.up.railway.app"; // Cambia esto por tu URL de producción
     const nombresConsultorios = {
         1: "Analia",
         2: "Gerardo",
