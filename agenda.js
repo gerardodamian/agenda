@@ -1,9 +1,14 @@
+// Detectar si estamos en local o en producción
+const BASE_URL =
+    window.location.hostname === "localhost"
+        ? "http://localhost:3001" // Desarrollo local
+        : "https://agenda-backend-j7py.onrender.com"; // Producción
+
 function formatearFecha(fechaISO) {
     const partes = fechaISO.split("-"); // yyyy-mm-dd
     return `${partes[2]}/${partes[1]}/${partes[0]}`; // dd/mm/yyyy
 }
 
-const BASE_URL = "https://agenda-backend-j7py.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
