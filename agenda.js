@@ -20,6 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (fechaSeleccionada) {
             mostrarHorarios(fechaSeleccionada);
         }
+        // Mostrar contador mensual
+        const [anio, mes] = fechaSeleccionada.split("-");
+        fetch(`${BASE_URL}/turnos-mes/${anio}/${mes}`)
+            .then((res) => res.json())
+            .then((data) => {
+                document.getElementById(
+                    "contador-mensual"
+                ).textContent = `Turnos ocupados en el mes: ${data.total}`;
+            })
+            .catch((err) =>
+                console.error("Error obteniendo turnos del mes", err)
+            );
     });
 
     // Leer turnos desde el backend
