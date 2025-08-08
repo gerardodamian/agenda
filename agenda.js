@@ -3,7 +3,7 @@ function formatearFecha(fechaISO) {
     return `${partes[2]}/${partes[1]}/${partes[0]}`; // dd/mm/yyyy
 }
 
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "https://agenda-backend-j7py.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
