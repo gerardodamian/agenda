@@ -9,7 +9,6 @@ function formatearFecha(fechaISO) {
     return `${partes[2]}/${partes[1]}/${partes[0]}`; // dd/mm/yyyy
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
     const fechaInput = document.getElementById("fecha");
     const horariosDiv = document.getElementById("horarios");
@@ -54,8 +53,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(turnoData),
             });
+            return true;
         } catch (err) {
             console.error("Error al guardar turno:", err);
+            return false;
         }
     }
 
@@ -127,6 +128,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     <textarea placeholder="Comentarios..." class="comentario">${
                         turno.comentario
                     }</textarea>
+                    <div class="botones-turno">
+                      <button class="btn-guardar">💾 Guardar</button>
+                    </div>
                   </div>
                 `;
 
@@ -150,9 +154,71 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (!depositoCheckbox.checked) montoInput.value = "";
                 });
 
+                // Botón de guardar manual
+                const btnGuardar = div.querySelector(".btn-guardar");
+                btnGuardar.addEventListener("click", async () => {
+                    const turnoData = {
+                        nombre: div.querySelector(".nombre").value,
+                        telefono: div.querySelector(".telefono").value,
+                        deposito: depositoCheckbox.checked,
+                        montoDeposito: montoInput.value,
+                        comentario: div.querySelector(".comentario").value,
+                    };
+
+                    // Cambiar apariencia del botón mientras guarda
+                    btnGuardar.disabled = true;
+                    btnGuardar.textContent = "⏳ Guardando...";
+                    btnGuardar.style.backgroundColor = "#ccc";
+
+                    const guardado = await guardarTurno(
+                        fecha,
+                        hora,
+                        consultorio,
+                        turnoData
+                    );
+
+                    if (guardado) {
+                        btnGuardar.textContent = "✅ Guardado";
+                        btnGuardar.style.backgroundColor = "#4CAF50";
+
+                        // Actualizar el estado visual del turno
+                        const resumen = div.querySelector(".paciente-resumen");
+                        resumen.textContent =
+                            turnoData.nombre || "Sin paciente";
+
+                        if (
+                            turnoData.nombre ||
+                            turnoData.telefono ||
+                            turnoData.deposito ||
+                            turnoData.comentario
+                        ) {
+                            div.classList.add("agendado");
+                            div.title = `Paciente: ${
+                                turnoData.nombre || "Sin nombre"
+                            }\nTel: ${turnoData.telefono || "Sin teléfono"}`;
+                        } else {
+                            div.classList.remove("agendado");
+                            div.title = "";
+                        }
+
+                        // Actualizar contador
+                        await actualizarContadorTurnos(fecha);
+                    } else {
+                        btnGuardar.textContent = "❌ Error";
+                        btnGuardar.style.backgroundColor = "#f44336";
+                    }
+
+                    // Restaurar botón después de 2 segundos
+                    setTimeout(() => {
+                        btnGuardar.disabled = false;
+                        btnGuardar.textContent = "💾 Guardar";
+                        btnGuardar.style.backgroundColor = "#2196F3";
+                    }, 2000);
+                });
+
                 // Botón WhatsApp
                 const whatsappButton = document.createElement("button");
-                whatsappButton.textContent = "Compartir por WhatsApp";
+                whatsappButton.textContent = "📱 Compartir por WhatsApp";
                 whatsappButton.className = "btn-whatsapp";
                 whatsappButton.addEventListener("click", () => {
                     const nombre =
@@ -198,9 +264,11 @@ Gracias por tu visita.`;
                     );
                 });
 
-                div.appendChild(whatsappButton);
+                // Agregar botón de WhatsApp al contenedor de botones
+                const botonesTurno = div.querySelector(".botones-turno");
+                botonesTurno.appendChild(whatsappButton);
 
-                // Guardado automático
+                // Guardado automático (mantener funcionalidad existente)
                 const save = () => {
                     guardarTurno(fecha, hora, consultorio, {
                         nombre: div.querySelector(".nombre").value,
@@ -210,6 +278,7 @@ Gracias por tu visita.`;
                         comentario: div.querySelector(".comentario").value,
                     });
                 };
+
                 div.querySelector(".nombre").addEventListener("input", save);
                 div.querySelector(".telefono").addEventListener("input", save);
                 depositoCheckbox.addEventListener("change", save);
@@ -222,6 +291,17 @@ Gracias por tu visita.`;
                 horariosDiv.appendChild(div);
             }
         }
+    }
+
+    // Función para actualizar el contador de turnos
+    async function actualizarContadorTurnos(fecha) {
+        const turnosGuardados = await getTurnosGuardados(fecha);
+        let agendados = Object.values(turnosGuardados).filter(
+            (t) => t.nombre || t.telefono
+        ).length;
+        document.getElementById(
+            "contador-turnos"
+        ).textContent = `Turnos agendados: ${agendados}/28`;
     }
 
     document.getElementById("buscador").addEventListener("input", async (e) => {
