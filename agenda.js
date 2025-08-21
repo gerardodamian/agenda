@@ -365,9 +365,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 div.innerHTML = `
                   <div class="horario-header">
-                    <h3>${formatearHorario(hora)} (${
+                    <h3>${formatearHoraInicio(hora)} (${
                     nombresConsultorios[consultorio]
                 })</h3>
+
                     <div class="horario-status">
                       <span class="paciente-resumen">${
                           turno.nombre
@@ -447,6 +448,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .toString()
             .padStart(2, "0")}:00`;
     }
+
+    function formatearHoraInicio(hora) {
+        return `${hora.toString().padStart(2, "0")}:00`;
+    }
+
 
     function getEstadoHorario(hora) {
         const ahora = new Date();
@@ -653,6 +659,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    
+
+
     function extraerDatosTurno(div) {
         return {
             nombre: div.querySelector(".nombre").value.trim(),
@@ -675,17 +684,26 @@ document.addEventListener("DOMContentLoaded", () => {
             turnoData.deposito ||
             turnoData.comentario;
 
-        if (estaOcupado) {
+        if (
+            turno.nombre ||
+            turno.telefono ||
+            turno.deposito ||
+            turno.comentario
+        ) {
             div.classList.add("agendado");
-            div.title = `Paciente: ${
-                turnoData.nombre || "Sin nombre"
-            }\nTel: ${formatearTelefono(
-                turnoData.telefono || "Sin teléfono"
-            )}\nDepósito: ${turnoData.deposito ? "✅" : "❌"}`;
+            div.setAttribute(
+                "data-hint",
+                `👤 ${turno.nombre || "Sin nombre"}\n📞 ${
+                    turno.telefono || "Sin teléfono"
+                }\n💵 Depósito: ${turno.deposito ? "✅" : "❌"}\n📝 ${
+                    turno.comentario || "Sin comentario"
+                }`
+            );
         } else {
             div.classList.remove("agendado");
-            div.title = "";
+            div.removeAttribute("data-hint");
         }
+
 
         // Actualizar badges
         const statusDiv = div.querySelector(".horario-status");
@@ -723,7 +741,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const telefono = turnoData.telefono.replace(/\D/g, "");
         const comentario = turnoData.comentario;
         const monto = turnoData.montoDeposito;
-        const horaStr = formatearHorario(hora);
+        const horaStr = `${hora.toString().padStart(2, "0")}:00`;
+
         const consultorioNombre = nombresConsultorios[consultorio];
 
         if (!telefono) {

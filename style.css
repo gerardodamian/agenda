@@ -19,6 +19,51 @@ body {
   border: 2px solid #f30606;
 }
 
+/* Estilos generales para los tooltips */
+.horario[data-hint] {
+  position: relative;
+  cursor: pointer;
+}
+
+.horario[data-hint]::after {
+  content: attr(data-hint);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: pre-line; /* Para que respete los \n */
+  font-size: 0.9rem;
+  line-height: 1.3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+
+.horario[data-hint]::before {
+  content: '';
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.horario[data-hint]:hover::after,
+.horario[data-hint]:hover::before {
+  opacity: 1;
+}
+
+
 /* ================== NAVEGACIÓN DE FECHAS ================== */
 .fecha-display {
   font-size: 1.2rem;
@@ -340,6 +385,8 @@ body {
   .horarios {
     gap: 15px;
   }
+
+  
 
   .botones-turno {
     flex-direction: column;
